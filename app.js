@@ -1,15 +1,10 @@
 
- // =====================================================
- // SOLE STUDIO - FRONTEND SETTINGS
- // =====================================================
-
 const SUPABASE_URL = "https://iyvmgmrtunivkamzysso.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_NPgwSxJUO_UBqmjsyFNcxA_SSYcgbb4";
 
-const CHECKOUT_ENDPOINT =
-  `${SUPABASE_URL}/functions/v1/payfast-checkout`;
-
+const CHECKOUT_ENDPOINT = `${SUPABASE_URL}/functions/v1/payfast-checkout`;
 const DELIVERY_FEE = 89;
+const SALE_DISCOUNT = 0.20;
 
 const SHOE_SIZES = [
   { value: "UK 5 / US 6", label: "UK 5 / US 6" },
@@ -34,6 +29,10 @@ const money = (amount) =>
     maximumFractionDigits: 2
   })}`;
 
+function salePrice(price) {
+  return Math.round((Number(price) * (1 - SALE_DISCOUNT) + Number.EPSILON) * 100) / 100;
+}
+
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, (character) => ({
     "&": "&amp;",
@@ -44,10 +43,7 @@ function escapeHTML(value) {
   })[character]);
 }
 
-// =====================================================
-// LOAD REAL PRODUCTS FROM SUPABASE
-// =====================================================
-
+// LOAD PRODUCTS
 async function loadProducts() {
   const grid = document.getElementById("product-grid");
   if (!grid) return;
@@ -61,27 +57,24 @@ async function loadProducts() {
 
   if (error) {
     console.error("Product loading error:", error);
-    grid.innerHTML =
-      "<p>We could not load the collection. Please try again later.</p>";
+    grid.innerHTML = "<p>We could not load the collection. Please try again later.</p>";
     return;
   }
 
   products = data || [];
 
   if (!products.length) {
-    grid.innerHTML = "<p>No products are available yet.</p>";
+    grid.innerHTML = "<p>No products are available yet. Add products in Supabase first.</p>";
     return;
   }
 
   renderProducts();
 }
 
-// =====================================================
-// DISPLAY PRODUCTS AND SIZE SELECTORS
-// =====================================================
-
+// PRODUCT DISPLAY
 function renderProducts() {
   const grid = document.getElementById("product-grid");
+  if (!grid) return;
 
   grid.innerHTML = products.map((product) => `
     <article class="product-card">
@@ -102,7 +95,12 @@ function renderProducts() {
             ? ` · ${escapeHTML(product.color)}`
             : ""}</p>
         </div>
-        <strong>${money(product.price)}</strong>
+
+        <div class="product-prices">
+          <del class="original-price">${money(product.price)}</del>
+          <strong class="sale-price">${money(salePrice(product.price))}</strong>
+          <span class="discount-label">20% OFF</span>
+        </div>
       </div>
 
       <label class="shoe-size-label" for="size-${escapeHTML(product.id)}">
@@ -145,11 +143,7 @@ function renderProducts() {
   });
 }
 
-// =====================================================
-// SHOPPING CART
-// Different sizes of the same shoe are separate items.
-// =====================================================
-
+// SHOPPING BAG
 function addToCart(productId, shoeSize, button) {
   const product = products.find((item) => item.id === productId);
   if (!product) return;
@@ -204,88 +198,96 @@ function changeQuantity(productId, shoeSize, amount) {
 
 function getSubtotal() {
   return cart.reduce(
-    (sum, item) => sum + Number(item.price) * item.quantity,
+    (sum, item) => sum + salePrice(item.price) * item.quantity,
     0
   );
 }
 
 function getTotal() {
-  return cart.length ? getSubtotal() + DELIVERY_FEE : 0;
+  return cart.length ? Math.round((getSubtotal() + DELIVERY_FEE) * 100) / 100 : 0;
 }
 
 function updateCart() {
   const count = cart.reduce((total, item) => total + item.quantity, 0);
 
-  document.getElementById("cart-count").textContent = count;
-  document.getElementById("cart-subtotal").textContent = money(getSubtotal());
-  document.getElementById("cart-delivery").textContent =
-    money(cart.length ? DELIVERY_FEE : 0);
-  document.getElementById("cart-total").textContent = money(getTotal());
-
+  const cartCount = document.getElementById("cart-count");
+  const cartSubtotal = document.getElementById("cart-subtotal");
+  const cartDelivery = document.getElementById("cart-delivery");
+  const cartTotal = document.getElementById("cart-total");
   const cartItems = document.getElementById("cart-items");
 
-  if (!cart.length) {
-    cartItems.innerHTML = "<p>Your bag is empty.</p>";
-  } else {
-    cartItems.innerHTML = cart.map((item) => `
-      <div class="cart-item">
-        <img
-          src="${escapeHTML(item.image)}"
-          alt="${escapeHTML(item.name)}">
+  if (cartCount) cartCount.textContent = count;
+  if (cartSubtotal) cartSubtotal.textContent = money(getSubtotal());
+  if (cartDelivery) cartDelivery.textContent = money(cart.length ? DELIVERY_FEE : 0);
+  if (cartTotal) cartTotal.textContent = money(getTotal());
 
-        <div>
-          <h3>${escapeHTML(item.name)}</h3>
-          <p>Size: ${escapeHTML(item.shoe_size)}</p>
-          <p>${money(item.price)} each</p>
+  if (cartItems) {
+    if (!cart.length) {
+      cartItems.innerHTML = "<p>Your bag is empty.</p>";
+    } else {
+      cartItems.innerHTML = cart.map((item) => `
+        <div class="cart-item">
+          <img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.name)}">
 
-          <div class="quantity">
-            <button
-              type="button"
-              data-quantity-id="${escapeHTML(item.id)}"
-              data-quantity-size="${escapeHTML(item.shoe_size)}"
-              data-quantity-change="-1"
-              aria-label="Remove one">−</button>
+          <div>
+            <h3>${escapeHTML(item.name)}</h3>
+            <p>Size: ${escapeHTML(item.shoe_size)}</p>
+            <p>
+              <del class="original-price">${money(item.price)}</del>
+              <strong class="sale-price">${money(salePrice(item.price))} each</strong>
+            </p>
 
-            <span>${item.quantity}</span>
+            <div class="quantity">
+              <button
+                type="button"
+                data-quantity-id="${escapeHTML(item.id)}"
+                data-quantity-size="${escapeHTML(item.shoe_size)}"
+                data-quantity-change="-1"
+                aria-label="Remove one">−</button>
 
-            <button
-              type="button"
-              data-quantity-id="${escapeHTML(item.id)}"
-              data-quantity-size="${escapeHTML(item.shoe_size)}"
-              data-quantity-change="1"
-              aria-label="Add one">+</button>
+              <span>${item.quantity}</span>
+
+              <button
+                type="button"
+                data-quantity-id="${escapeHTML(item.id)}"
+                data-quantity-size="${escapeHTML(item.shoe_size)}"
+                data-quantity-change="1"
+                aria-label="Add one">+</button>
+            </div>
           </div>
+
+          <strong>${money(salePrice(item.price) * item.quantity)}</strong>
         </div>
+      `).join("");
 
-        <strong>${money(Number(item.price) * item.quantity)}</strong>
-      </div>
-    `).join("");
-
-    cartItems.querySelectorAll("[data-quantity-id]").forEach((button) => {
-      button.addEventListener("click", () => {
-        changeQuantity(
-          button.dataset.quantityId,
-          button.dataset.quantitySize,
-          Number(button.dataset.quantityChange)
-        );
+      cartItems.querySelectorAll("[data-quantity-id]").forEach((button) => {
+        button.addEventListener("click", () => {
+          changeQuantity(
+            button.dataset.quantityId,
+            button.dataset.quantitySize,
+            Number(button.dataset.quantityChange)
+          );
+        });
       });
-    });
+    }
   }
 
   const checkoutButton = document.getElementById("checkout-button");
-  checkoutButton.disabled = cart.length === 0;
-  checkoutButton.style.opacity = cart.length === 0 ? "0.5" : "1";
+  if (checkoutButton) {
+    checkoutButton.disabled = cart.length === 0;
+    checkoutButton.style.opacity = cart.length === 0 ? "0.5" : "1";
+  }
 
-  document.getElementById("checkout-subtotal").textContent = money(getSubtotal());
-  document.getElementById("checkout-total").textContent = money(getTotal());
+  const checkoutSubtotal = document.getElementById("checkout-subtotal");
+  const checkoutTotal = document.getElementById("checkout-total");
+
+  if (checkoutSubtotal) checkoutSubtotal.textContent = money(getSubtotal());
+  if (checkoutTotal) checkoutTotal.textContent = money(getTotal());
 }
 
-// =====================================================
 // OPEN AND CLOSE BAG
-// =====================================================
-
 function toggleCart() {
-  document.getElementById("cart-overlay").classList.toggle("hidden");
+  document.getElementById("cart-overlay")?.classList.toggle("hidden");
 }
 
 function closeCart(event) {
@@ -294,10 +296,7 @@ function closeCart(event) {
   }
 }
 
-// =====================================================
-// GUEST CHECKOUT
-// =====================================================
-
+// CHECKOUT
 function openCheckout() {
   if (!cart.length) {
     alert("Your shopping bag is empty.");
@@ -306,7 +305,6 @@ function openCheckout() {
 
   document.getElementById("cart-overlay").classList.add("hidden");
   document.getElementById("checkout-error").textContent = "";
-
   updateCart();
   document.getElementById("checkout-overlay").classList.remove("hidden");
 }
@@ -315,10 +313,7 @@ function closeCheckout() {
   document.getElementById("checkout-overlay").classList.add("hidden");
 }
 
-// =====================================================
-// COLLECT CUSTOMER AND DELIVERY DETAILS
-// =====================================================
-
+// CUSTOMER DETAILS
 function getCheckoutDetails() {
   return {
     first_name: document.getElementById("first-name").value.trim(),
@@ -331,123 +326,109 @@ function getCheckoutDetails() {
     city: document.getElementById("city").value.trim(),
     province: document.getElementById("province").value.trim(),
     postal_code: document.getElementById("postal-code").value.trim(),
-    delivery_instructions:
-      document.getElementById("delivery-instructions").value.trim()
+    delivery_instructions: document.getElementById("delivery-instructions").value.trim()
   };
 }
 
-// =====================================================
-// CHECKOUT AND PAYFAST REDIRECT
-// =====================================================
+// PAYFAST CHECKOUT
+document.getElementById("checkout-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
 
-document.getElementById("checkout-form").addEventListener(
-  "submit",
-  async (event) => {
-    event.preventDefault();
+  const errorBox = document.getElementById("checkout-error");
+  const payButton = document.getElementById("pay-button");
 
-    const errorBox = document.getElementById("checkout-error");
-    const payButton = document.getElementById("pay-button");
+  errorBox.textContent = "";
 
-    errorBox.textContent = "";
-
-    if (!cart.length) {
-      errorBox.textContent = "Your shopping bag is empty.";
-      return;
-    }
-
-    const customer = getCheckoutDetails();
-
-    const requiredFields = [
-      ["first_name", "first name"],
-      ["last_name", "last name"],
-      ["email", "email address"],
-      ["phone", "mobile number"],
-      ["address_line1", "street address"],
-      ["suburb", "suburb"],
-      ["city", "city or town"],
-      ["province", "province"],
-      ["postal_code", "postal code"]
-    ];
-
-    const missing = requiredFields.find(([key]) => !customer[key]);
-
-    if (missing) {
-      errorBox.textContent = `Please enter your ${missing[1]}.`;
-      return;
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email)) {
-      errorBox.textContent = "Please enter a valid email address.";
-      return;
-    }
-
-    const items = cart.map((item) => ({
-      product_id: item.id,
-      quantity: item.quantity,
-      shoe_size: item.shoe_size
-    }));
-
-    payButton.disabled = true;
-    payButton.textContent = "Preparing secure checkout...";
-
-    try {
-      const response = await fetch(CHECKOUT_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({
-          ...customer,
-          items,
-          site_url: window.location.origin
-        })
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          result.error || result.message || "Could not start checkout."
-        );
-      }
-
-      if (!result.process_url || !result.fields) {
-        throw new Error("The payment service returned an incomplete response.");
-      }
-
-      const paymentForm = document.createElement("form");
-      paymentForm.method = "POST";
-      paymentForm.action = result.process_url;
-
-      Object.entries(result.fields).forEach(([key, value]) => {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = key;
-        input.value = String(value);
-        paymentForm.appendChild(input);
-      });
-
-      document.body.appendChild(paymentForm);
-      paymentForm.submit();
-    } catch (error) {
-      console.error("Checkout error:", error);
-
-      errorBox.textContent =
-        error.message || "Something went wrong. Please try again.";
-
-      payButton.disabled = false;
-      payButton.textContent = "Continue to PayFast →";
-    }
+  if (!cart.length) {
+    errorBox.textContent = "Your shopping bag is empty.";
+    return;
   }
-);
 
-// =====================================================
-// INITIALISE WEBSITE
-// =====================================================
+  const customer = getCheckoutDetails();
 
-document.getElementById("year").textContent = new Date().getFullYear();
+  const requiredFields = [
+    ["first_name", "first name"],
+    ["last_name", "last name"],
+    ["email", "email address"],
+    ["phone", "mobile number"],
+    ["address_line1", "street address"],
+    ["suburb", "suburb"],
+    ["city", "city or town"],
+    ["province", "province"],
+    ["postal_code", "postal code"]
+  ];
+
+  const missing = requiredFields.find(([key]) => !customer[key]);
+
+  if (missing) {
+    errorBox.textContent = `Please enter your ${missing[1]}.`;
+    return;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email)) {
+    errorBox.textContent = "Please enter a valid email address.";
+    return;
+  }
+
+  const items = cart.map((item) => ({
+    product_id: item.id,
+    quantity: item.quantity,
+    shoe_size: item.shoe_size
+  }));
+
+  payButton.disabled = true;
+  payButton.textContent = "Preparing secure checkout...";
+
+  try {
+    const response = await fetch(CHECKOUT_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({
+        ...customer,
+        items,
+        site_url: window.location.origin
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || result.message || "Could not start checkout.");
+    }
+
+    if (!result.process_url || !result.fields) {
+      throw new Error("The payment service returned an incomplete response.");
+    }
+
+    const paymentForm = document.createElement("form");
+    paymentForm.method = "POST";
+    paymentForm.action = result.process_url;
+
+    Object.entries(result.fields).forEach(([key, value]) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = key;
+      input.value = String(value);
+      paymentForm.appendChild(input);
+    });
+
+    document.body.appendChild(paymentForm);
+    paymentForm.submit();
+  } catch (error) {
+    console.error("Checkout error:", error);
+    errorBox.textContent = error.message || "Something went wrong. Please try again.";
+    payButton.disabled = false;
+    payButton.textContent = "Continue to PayFast →";
+  }
+});
+
+// INITIALISE
+const yearElement = document.getElementById("year");
+if (yearElement) yearElement.textContent = new Date().getFullYear();
 
 updateCart();
 loadProducts();
