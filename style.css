@@ -697,4 +697,38 @@ footer p {
   .form-row input {
     width: 100%;
   }
+  
+.product-prices {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.original-price {
+  color: #888;
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.sale-price {
+  color: #a77b36;
+  font-weight: 700;
+}
+
+.discount-label {
+  display: inline-block;
+  margin-top: 3px;
+  padding: 3px 6px;
+  background: #171717;
+  color: #d9b36a;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.cart-item .sale-price {
+  display: inline-block;
+  font-size: 0.9rem;
+}
 }
