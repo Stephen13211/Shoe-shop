@@ -11,6 +11,15 @@ const CHECKOUT_ENDPOINT =
 
 const DELIVERY_FEE = 89;
 
+const SHOE_SIZES = [
+  { value: "UK 5 / US 6", label: "UK 5 / US 6" },
+  { value: "UK 6 / US 7", label: "UK 6 / US 7" },
+  { value: "UK 7 / US 8", label: "UK 7 / US 8" },
+  { value: "UK 8 / US 9", label: "UK 8 / US 9" },
+  { value: "UK 9 / US 10", label: "UK 9 / US 10" },
+  { value: "UK 10 / US 11", label: "UK 10 / US 11" }
+];
+
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
@@ -41,7 +50,6 @@ function escapeHTML(value) {
 
 async function loadProducts() {
   const grid = document.getElementById("product-grid");
-
   if (!grid) return;
 
   grid.innerHTML = '<p class="loading">Loading the collection...</p>';
@@ -60,7 +68,7 @@ async function loadProducts() {
 
   products = data || [];
 
-  if (products.length === 0) {
+  if (!products.length) {
     grid.innerHTML = "<p>No products are available yet.</p>";
     return;
   }
@@ -69,7 +77,7 @@ async function loadProducts() {
 }
 
 // =====================================================
-// DISPLAY PRODUCTS
+// DISPLAY PRODUCTS AND SIZE SELECTORS
 // =====================================================
 
 function renderProducts() {
@@ -97,6 +105,20 @@ function renderProducts() {
         <strong>${money(product.price)}</strong>
       </div>
 
+      <label class="shoe-size-label" for="size-${escapeHTML(product.id)}">
+        Choose size
+      </label>
+
+      <select
+        class="shoe-size-select"
+        id="size-${escapeHTML(product.id)}"
+        aria-label="Choose shoe size for ${escapeHTML(product.name)}">
+        <option value="">Select UK / US size</option>
+        ${SHOE_SIZES.map((size) => `
+          <option value="${size.value}">${size.label}</option>
+        `).join("")}
+      </select>
+
       <button
         type="button"
         class="add-button"
@@ -108,25 +130,42 @@ function renderProducts() {
 
   grid.querySelectorAll("[data-add-product]").forEach((button) => {
     button.addEventListener("click", () => {
-      addToCart(button.dataset.addProduct, button);
+      const productId = button.dataset.addProduct;
+      const selector = document.getElementById(`size-${productId}`);
+      const selectedSize = selector.value;
+
+      if (!selectedSize) {
+        alert("Please choose a shoe size first.");
+        selector.focus();
+        return;
+      }
+
+      addToCart(productId, selectedSize, button);
     });
   });
 }
 
 // =====================================================
 // SHOPPING CART
+// Different sizes of the same shoe are separate items.
 // =====================================================
 
-function addToCart(productId, button) {
+function addToCart(productId, shoeSize, button) {
   const product = products.find((item) => item.id === productId);
   if (!product) return;
 
-  const existing = cart.find((item) => item.id === productId);
+  const existing = cart.find(
+    (item) => item.id === productId && item.shoe_size === shoeSize
+  );
 
   if (existing) {
     existing.quantity += 1;
   } else {
-    cart.push({ ...product, quantity: 1 });
+    cart.push({
+      ...product,
+      shoe_size: shoeSize,
+      quantity: 1
+    });
   }
 
   updateCart();
@@ -143,14 +182,21 @@ function addToCart(productId, button) {
   }
 }
 
-function changeQuantity(productId, amount) {
-  const item = cart.find((product) => product.id === productId);
+function changeQuantity(productId, shoeSize, amount) {
+  const item = cart.find(
+    (product) =>
+      product.id === productId && product.shoe_size === shoeSize
+  );
+
   if (!item) return;
 
   item.quantity += amount;
 
   if (item.quantity <= 0) {
-    cart = cart.filter((product) => product.id !== productId);
+    cart = cart.filter(
+      (product) =>
+        !(product.id === productId && product.shoe_size === shoeSize)
+    );
   }
 
   updateCart();
@@ -168,23 +214,17 @@ function getTotal() {
 }
 
 function updateCart() {
-  const count = cart.reduce(
-    (total, item) => total + item.quantity,
-    0
-  );
+  const count = cart.reduce((total, item) => total + item.quantity, 0);
 
   document.getElementById("cart-count").textContent = count;
-  document.getElementById("cart-subtotal").textContent =
-    money(getSubtotal());
-
+  document.getElementById("cart-subtotal").textContent = money(getSubtotal());
   document.getElementById("cart-delivery").textContent =
     money(cart.length ? DELIVERY_FEE : 0);
-
   document.getElementById("cart-total").textContent = money(getTotal());
 
   const cartItems = document.getElementById("cart-items");
 
-  if (cart.length === 0) {
+  if (!cart.length) {
     cartItems.innerHTML = "<p>Your bag is empty.</p>";
   } else {
     cartItems.innerHTML = cart.map((item) => `
@@ -195,12 +235,14 @@ function updateCart() {
 
         <div>
           <h3>${escapeHTML(item.name)}</h3>
+          <p>Size: ${escapeHTML(item.shoe_size)}</p>
           <p>${money(item.price)} each</p>
 
           <div class="quantity">
             <button
               type="button"
               data-quantity-id="${escapeHTML(item.id)}"
+              data-quantity-size="${escapeHTML(item.shoe_size)}"
               data-quantity-change="-1"
               aria-label="Remove one">−</button>
 
@@ -209,14 +251,13 @@ function updateCart() {
             <button
               type="button"
               data-quantity-id="${escapeHTML(item.id)}"
+              data-quantity-size="${escapeHTML(item.shoe_size)}"
               data-quantity-change="1"
               aria-label="Add one">+</button>
           </div>
         </div>
 
-        <strong>
-          ${money(Number(item.price) * item.quantity)}
-        </strong>
+        <strong>${money(Number(item.price) * item.quantity)}</strong>
       </div>
     `).join("");
 
@@ -224,6 +265,7 @@ function updateCart() {
       button.addEventListener("click", () => {
         changeQuantity(
           button.dataset.quantityId,
+          button.dataset.quantitySize,
           Number(button.dataset.quantityChange)
         );
       });
@@ -234,11 +276,8 @@ function updateCart() {
   checkoutButton.disabled = cart.length === 0;
   checkoutButton.style.opacity = cart.length === 0 ? "0.5" : "1";
 
-  document.getElementById("checkout-subtotal").textContent =
-    money(getSubtotal());
-
-  document.getElementById("checkout-total").textContent =
-    money(getTotal());
+  document.getElementById("checkout-subtotal").textContent = money(getSubtotal());
+  document.getElementById("checkout-total").textContent = money(getTotal());
 }
 
 // =====================================================
@@ -260,7 +299,7 @@ function closeCart(event) {
 // =====================================================
 
 function openCheckout() {
-  if (cart.length === 0) {
+  if (!cart.length) {
     alert("Your shopping bag is empty.");
     return;
   }
@@ -311,7 +350,7 @@ document.getElementById("checkout-form").addEventListener(
 
     errorBox.textContent = "";
 
-    if (cart.length === 0) {
+    if (!cart.length) {
       errorBox.textContent = "Your shopping bag is empty.";
       return;
     }
@@ -333,8 +372,7 @@ document.getElementById("checkout-form").addEventListener(
     const missing = requiredFields.find(([key]) => !customer[key]);
 
     if (missing) {
-      errorBox.textContent =
-        `Please enter your ${missing[1]}.`;
+      errorBox.textContent = `Please enter your ${missing[1]}.`;
       return;
     }
 
@@ -345,7 +383,8 @@ document.getElementById("checkout-form").addEventListener(
 
     const items = cart.map((item) => ({
       product_id: item.id,
-      quantity: item.quantity
+      quantity: item.quantity,
+      shoe_size: item.shoe_size
     }));
 
     payButton.disabled = true;
@@ -370,16 +409,12 @@ document.getElementById("checkout-form").addEventListener(
 
       if (!response.ok) {
         throw new Error(
-          result.error ||
-          result.message ||
-          "Could not start checkout."
+          result.error || result.message || "Could not start checkout."
         );
       }
 
       if (!result.process_url || !result.fields) {
-        throw new Error(
-          "The payment service returned an incomplete response."
-        );
+        throw new Error("The payment service returned an incomplete response.");
       }
 
       const paymentForm = document.createElement("form");
@@ -412,8 +447,7 @@ document.getElementById("checkout-form").addEventListener(
 // INITIALISE WEBSITE
 // =====================================================
 
-document.getElementById("year").textContent =
-  new Date().getFullYear();
+document.getElementById("year").textContent = new Date().getFullYear();
 
 updateCart();
 loadProducts();
