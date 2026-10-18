@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sole Studio | Thoughtful Footwear</title>
+  <meta name="description" content="Discover thoughtful everyday footwear at Sole Studio.">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="announcement">
+    SOLE STUDIO · FLAT-RATE DELIVERY R89 PER ORDER
+  </div>
+
+  <nav class="navbar">
+    <a href="#" class="logo">sole<span>studio</span></a>
+    <div class="nav-links">
+      <a href="#shop">Shop</a>
+      <a href="#story">Our story</a>
+      <a href="#contact">Contact</a>
+    </div>
+    <button class="cart-button" onclick="toggleCart()">
+      Bag <span id="cart-count">0</span>
+    </button>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-content">
+      <p class="eyebrow">The new uniform / Sole Studio</p>
+      <h1>Walk your<br><i>own line.</i></h1>
+      <p>
+        Thoughtful footwear for people who move through the world
+        with intention.
+      </p>
+      <a href="#shop" class="main-link">Explore collection →</a>
+    </div>
+    <div class="hero-image">
+      <img
+        src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=85"
+        alt="Red sneaker from the Sole Studio collection">
+    </div>
+  </header>
+
+  <section class="collection" id="shop">
+    <div class="section-heading">
+      <p class="eyebrow">The collection</p>
+      <h2>New arrivals,<br><i>fresh perspective.</i></h2>
+      <p class="muted">Delivery is R89 per order.</p>
+    </div>
+    <div id="product-grid" class="product-grid">
+      <p class="loading">Loading the collection...</p>
+    </div>
+  </section>
+
+  <section class="story" id="story">
+    <div class="story-image">
+      <img
+        src="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=1000&q=85"
+        alt="Casual sneakers">
+    </div>
+    <div class="story-content">
+      <p class="eyebrow">Less, but better</p>
+      <h2>Good shoes<br><i>go places.</i></h2>
+      <p>
+        Discover everyday footwear with thoughtful design, versatile
+        style and details that help make every pair your own.
+      </p>
+    </div>
+  </section>
+
+  <section class="newsletter" id="contact">
+    <p class="eyebrow">In your orbit</p>
+    <h2>Notes from the studio.<br><i>Nothing noisy.</i></h2>
+    <p>Have a question about an order? Contact us by email.</p>
+    <a class="newsletter-link" href="mailto:YOUR_EMAIL@example.com">
+      Email Sole Studio →
+    </a>
+  </section>
+
+  <footer>
+    <a href="#" class="logo">sole<span>studio</span></a>
+    <p>© <span id="year"></span> Sole Studio</p>
+  </footer>
+
+  <!-- Shopping cart -->
+  <div id="cart-overlay" class="overlay hidden" onclick="closeCart(event)">
+    <aside class="cart-drawer" onclick="event.stopPropagation()">
+      <button class="close-button" onclick="toggleCart()" aria-label="Close cart">×</button>
+      <p class="eyebrow">Your selection</p>
+      <h2>Shopping bag</h2>
+
+      <div id="cart-items"></div>
+
+      <div class="cart-bottom">
+        <div class="cart-total">
+          <span>Subtotal</span>
+          <strong id="cart-subtotal">R0.00</strong>
+        </div>
+        <div class="cart-total">
+          <span>Delivery</span>
+          <strong id="cart-delivery">R89.00</strong>
+        </div>
+        <div class="cart-total grand-total">
+          <span>Total</span>
+          <strong id="cart-total">R0.00</strong>
+        </div>
+        <button id="checkout-button" class="checkout-button" onclick="openCheckout()">
+          Continue as guest →
+        </button>
+        <p class="muted small">Flat-rate delivery: R89 per order.</p>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Guest checkout -->
+  <div id="checkout-overlay" class="overlay hidden">
+    <section class="checkout-modal">
+      <button class="close-button" onclick="closeCheckout()" aria-label="Close checkout">×</button>
+      <p class="eyebrow">Guest checkout</p>
+      <h2>Almost <i>yours.</i></h2>
+      <p class="secure-message">
+        You can check out without creating an account.
+        Payment is processed by PayFast.
+      </p>
+
+      <form id="checkout-form">
+        <div class="form-row">
+          <input id="first-name" type="text" placeholder="First name" autocomplete="given-name" required>
+          <input id="last-name" type="text" placeholder="Last name" autocomplete="family-name" required>
+        </div>
+        <input id="email" type="email" placeholder="Email address" autocomplete="email" required>
+        <p class="checkout-summary">
+          Products: <strong id="checkout-subtotal">R0.00</strong><br>
+          Delivery: <strong>R89.00</strong><br>
+          Total to pay: <strong id="checkout-total">R0.00</strong>
+        </p>
+        <button id="pay-button" class="checkout-button" type="submit">
+          Continue to PayFast →
+        </button>
+        <p id="checkout-error" role="alert"></p>
+      </form>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
