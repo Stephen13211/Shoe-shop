@@ -42,10 +42,7 @@ function escapeHTML(value) {
 async function loadProducts() {
   const grid = document.getElementById("product-grid");
 
-  if (!grid) {
-    console.error("Product grid element was not found.");
-    return;
-  }
+  if (!grid) return;
 
   grid.innerHTML = '<p class="loading">Loading the collection...</p>';
 
@@ -72,7 +69,7 @@ async function loadProducts() {
 }
 
 // =====================================================
-// DISPLAY PRODUCT CARDS
+// DISPLAY PRODUCTS
 // =====================================================
 
 function renderProducts() {
@@ -118,7 +115,6 @@ function renderProducts() {
 
 // =====================================================
 // SHOPPING CART
-// Clicking Add to Bag does NOT open the bag.
 // =====================================================
 
 function addToCart(productId, button) {
@@ -135,10 +131,8 @@ function addToCart(productId, button) {
 
   updateCart();
 
-  // Brief confirmation without interrupting shopping.
   if (button) {
     const originalText = button.textContent;
-
     button.textContent = "Added to bag ✓";
     button.disabled = true;
 
@@ -237,7 +231,6 @@ function updateCart() {
   }
 
   const checkoutButton = document.getElementById("checkout-button");
-
   checkoutButton.disabled = cart.length === 0;
   checkoutButton.style.opacity = cart.length === 0 ? "0.5" : "1";
 
@@ -276,7 +269,6 @@ function openCheckout() {
   document.getElementById("checkout-error").textContent = "";
 
   updateCart();
-
   document.getElementById("checkout-overlay").classList.remove("hidden");
 }
 
@@ -285,8 +277,28 @@ function closeCheckout() {
 }
 
 // =====================================================
-// SEND ORDER TO SUPABASE EDGE FUNCTION
-// Backend must calculate prices and delivery itself.
+// COLLECT CUSTOMER AND DELIVERY DETAILS
+// =====================================================
+
+function getCheckoutDetails() {
+  return {
+    first_name: document.getElementById("first-name").value.trim(),
+    last_name: document.getElementById("last-name").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    address_line1: document.getElementById("address-line1").value.trim(),
+    address_line2: document.getElementById("address-line2").value.trim(),
+    suburb: document.getElementById("suburb").value.trim(),
+    city: document.getElementById("city").value.trim(),
+    province: document.getElementById("province").value.trim(),
+    postal_code: document.getElementById("postal-code").value.trim(),
+    delivery_instructions:
+      document.getElementById("delivery-instructions").value.trim()
+  };
+}
+
+// =====================================================
+// CHECKOUT AND PAYFAST REDIRECT
 // =====================================================
 
 document.getElementById("checkout-form").addEventListener(
@@ -304,21 +316,33 @@ document.getElementById("checkout-form").addEventListener(
       return;
     }
 
-    const firstName =
-      document.getElementById("first-name").value.trim();
+    const customer = getCheckoutDetails();
 
-    const lastName =
-      document.getElementById("last-name").value.trim();
+    const requiredFields = [
+      ["first_name", "first name"],
+      ["last_name", "last name"],
+      ["email", "email address"],
+      ["phone", "mobile number"],
+      ["address_line1", "street address"],
+      ["suburb", "suburb"],
+      ["city", "city or town"],
+      ["province", "province"],
+      ["postal_code", "postal code"]
+    ];
 
-    const email =
-      document.getElementById("email").value.trim();
+    const missing = requiredFields.find(([key]) => !customer[key]);
 
-    if (!firstName || !lastName || !email) {
-      errorBox.textContent = "Please complete all checkout fields.";
+    if (missing) {
+      errorBox.textContent =
+        `Please enter your ${missing[1]}.`;
       return;
     }
 
-    // Send product IDs and quantities only.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email)) {
+      errorBox.textContent = "Please enter a valid email address.";
+      return;
+    }
+
     const items = cart.map((item) => ({
       product_id: item.id,
       quantity: item.quantity
@@ -336,9 +360,7 @@ document.getElementById("checkout-form").addEventListener(
           "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({
-          first_name: firstName,
-          last_name: lastName,
-          email,
+          ...customer,
           items,
           site_url: window.location.origin
         })
@@ -360,19 +382,15 @@ document.getElementById("checkout-form").addEventListener(
         );
       }
 
-      // Submit payment fields to the returned PayFast URL.
       const paymentForm = document.createElement("form");
-
       paymentForm.method = "POST";
       paymentForm.action = result.process_url;
 
       Object.entries(result.fields).forEach(([key, value]) => {
         const input = document.createElement("input");
-
         input.type = "hidden";
         input.name = key;
         input.value = String(value);
-
         paymentForm.appendChild(input);
       });
 
