@@ -5,8 +5,8 @@
 // Never put the service-role key here.
 // =====================================================
 
-const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY";
+const SUPABASE_URL = "https://iyvmgmrtunivkamzysso.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_NPgwSxJUO_UBqmjsyFNcxA_SSYcgbb4";
 
 const CHECKOUT_ENDPOINT =
   `${SUPABASE_URL}/functions/v1/payfast-checkout`;
