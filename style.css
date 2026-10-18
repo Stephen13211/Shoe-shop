@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap');
 
 :root {
@@ -23,11 +24,14 @@ body {
   font-family: Inter, sans-serif;
 }
 
-button, input {
+button,
+input,
+textarea {
   font: inherit;
 }
 
-button, a {
+button,
+a {
   cursor: pointer;
 }
 
@@ -101,6 +105,7 @@ button:hover {
   width: 22px;
 }
 
+/* Hero layout and reduced spacing */
 .hero {
   display: grid;
   grid-template-columns: 0.85fr 1.15fr;
@@ -109,7 +114,8 @@ button:hover {
 
 .hero-content {
   align-self: center;
-  padding: 80px 12%;
+  padding: 40px 12%;
+  min-width: 0;
 }
 
 .eyebrow {
@@ -119,7 +125,8 @@ button:hover {
   text-transform: uppercase;
 }
 
-h1, h2 {
+h1,
+h2 {
   font-family: "Playfair Display", serif;
   font-weight: 500;
   letter-spacing: -0.06em;
@@ -128,7 +135,7 @@ h1, h2 {
 
 h1 {
   font-size: clamp(60px, 7vw, 100px);
-  margin: 30px 0;
+  margin: 24px 0;
 }
 
 h2 {
@@ -136,11 +143,12 @@ h2 {
   margin: 15px 0;
 }
 
-h1 i, h2 i {
+h1 i,
+h2 i {
   font-style: italic;
 }
 
-.hero-content > p:not(.eyebrow) {
+.hero-content > p:not(.eyebrow):not(.sale-description):not(.sale-footnote) {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.8;
@@ -152,7 +160,7 @@ h1 i, h2 i {
   color: var(--black);
   display: inline-block;
   font: 11px "DM Mono", monospace;
-  margin-top: 25px;
+  margin-top: 20px;
   padding-bottom: 10px;
   text-decoration: none;
   text-transform: uppercase;
@@ -162,13 +170,93 @@ h1 i, h2 i {
   min-height: 620px;
 }
 
-.hero-image img, .story-image img {
+.hero-image img,
+.story-image img {
   display: block;
   height: 100%;
   object-fit: cover;
   width: 100%;
 }
 
+/* Premium monthly sale box */
+.monthly-sale {
+  background: var(--black);
+  border: 1px solid rgba(189, 145, 78, 0.65);
+  color: var(--cream);
+  margin-top: 28px;
+  max-width: 390px;
+  padding: 22px;
+  position: relative;
+}
+
+.sale-topline {
+  align-items: center;
+  color: #d8bd8b;
+  display: flex;
+  font: 9px "DM Mono", monospace;
+  justify-content: space-between;
+  letter-spacing: 0.1em;
+  gap: 10px;
+}
+
+.sale-discount {
+  border: 1px solid var(--gold);
+  flex-shrink: 0;
+  padding: 6px 8px;
+}
+
+.monthly-sale .sale-title {
+  color: var(--cream);
+  font-size: clamp(29px, 3vw, 40px);
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+  margin: 20px 0 10px;
+}
+
+.sale-description {
+  color: #c4c0b8;
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 0 0 20px;
+}
+
+.sale-countdown {
+  display: grid;
+  gap: 7px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.sale-time {
+  align-items: center;
+  background: #292825;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: 12px 3px;
+}
+
+.sale-time strong {
+  color: var(--cream);
+  font: 500 23px "DM Mono", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.sale-time span {
+  color: #c8b18a;
+  font: 8px "DM Mono", monospace;
+  margin-top: 5px;
+}
+
+.sale-footnote {
+  color: #c4c0b8;
+  font: 8px "DM Mono", monospace;
+  letter-spacing: 0.08em;
+  line-height: 1.6;
+  margin: 17px 0 0;
+}
+
+/* Product collection */
 .collection {
   padding: 100px 6%;
 }
@@ -237,7 +325,8 @@ h1 i, h2 i {
   margin: 0 0 6px;
 }
 
-.product-info p, .product-info strong {
+.product-info p,
+.product-info strong {
   font: 10px "DM Mono", monospace;
 }
 
@@ -262,6 +351,7 @@ h1 i, h2 i {
   width: 100%;
 }
 
+/* Story section */
 .story {
   background: #dfdcd4;
   display: grid;
@@ -285,6 +375,7 @@ h1 i, h2 i {
   max-width: 340px;
 }
 
+/* Newsletter */
 .newsletter {
   background: var(--black);
   color: var(--cream);
@@ -308,6 +399,7 @@ h1 i, h2 i {
   text-transform: uppercase;
 }
 
+/* Footer */
 footer {
   align-items: center;
   background: var(--black);
@@ -326,6 +418,7 @@ footer p {
   font: 10px "DM Mono", monospace;
 }
 
+/* Shopping cart and checkout overlays */
 .overlay {
   align-items: stretch;
   background: rgba(0, 0, 0, 0.6);
@@ -349,7 +442,8 @@ footer p {
   width: 100%;
 }
 
-.cart-drawer h2, .checkout-modal h2 {
+.cart-drawer h2,
+.checkout-modal h2 {
   font-size: 42px;
 }
 
@@ -381,7 +475,8 @@ footer p {
   margin: 0 0 5px;
 }
 
-.cart-item p, .cart-item strong {
+.cart-item p,
+.cart-item strong {
   font: 10px "DM Mono", monospace;
 }
 
@@ -441,7 +536,8 @@ footer p {
   margin-top: 25px;
 }
 
-.checkout-modal input {
+.checkout-modal input,
+.checkout-modal textarea {
   background: transparent;
   border: 0;
   border-bottom: 1px solid var(--line);
@@ -453,8 +549,13 @@ footer p {
   width: 100%;
 }
 
-.checkout-modal input:focus {
+.checkout-modal input:focus,
+.checkout-modal textarea:focus {
   border-bottom-color: var(--gold);
+}
+
+.checkout-modal textarea {
+  resize: vertical;
 }
 
 .form-row {
@@ -466,7 +567,8 @@ footer p {
   width: 50%;
 }
 
-.secure-message, .checkout-summary {
+.secure-message,
+.checkout-summary {
   background: #e2ded4;
   color: var(--muted);
   font: 11px "DM Mono", monospace;
@@ -489,6 +591,7 @@ footer p {
   grid-column: 1 / -1;
 }
 
+/* Mobile layout */
 @media (max-width: 700px) {
   .navbar {
     padding: 20px;
@@ -505,14 +608,35 @@ footer p {
   .hero {
     display: flex;
     flex-direction: column-reverse;
+    min-height: 0;
   }
 
   .hero-image {
     min-height: 350px;
+    height: 350px;
   }
 
   .hero-content {
-    padding: 55px 24px;
+    padding: 28px 24px 35px;
+  }
+
+  h1 {
+    font-size: clamp(56px, 14vw, 76px);
+    margin: 22px 0;
+  }
+
+  .monthly-sale {
+    margin-top: 24px;
+    max-width: none;
+    padding: 18px;
+  }
+
+  .monthly-sale .sale-title {
+    font-size: 34px;
+  }
+
+  .sale-time strong {
+    font-size: 21px;
   }
 
   .collection {
@@ -547,6 +671,7 @@ footer p {
 
   .story-image {
     min-height: 330px;
+    height: 330px;
   }
 
   .story-content {
@@ -560,7 +685,8 @@ footer p {
     padding: 30px 20px;
   }
 
-  .cart-drawer, .checkout-modal {
+  .cart-drawer,
+  .checkout-modal {
     padding: 30px 20px;
   }
 
