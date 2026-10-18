@@ -16,11 +16,13 @@
 
   <nav class="navbar">
     <a href="#" class="logo">sole<span>studio</span></a>
+
     <div class="nav-links">
       <a href="#shop">Shop</a>
       <a href="#story">Our story</a>
       <a href="#contact">Contact</a>
     </div>
+
     <button class="cart-button" onclick="toggleCart()">
       Bag <span id="cart-count">0</span>
     </button>
@@ -29,13 +31,57 @@
   <header class="hero">
     <div class="hero-content">
       <p class="eyebrow">The new uniform / Sole Studio</p>
+
       <h1>Walk your<br><i>own line.</i></h1>
+
       <p>
         Thoughtful footwear for people who move through the world
         with intention.
       </p>
+
       <a href="#shop" class="main-link">Explore collection →</a>
+
+      <!-- Monthly sale countdown -->
+      <div class="monthly-sale">
+        <div class="sale-topline">
+          <span>SOLE STUDIO EXCLUSIVE</span>
+          <span class="sale-discount">−20%</span>
+        </div>
+
+        <h2 class="sale-title">A fresh month.<br><i>A better price.</i></h2>
+
+        <p class="sale-description">
+          Enjoy 20% off selected footwear this month.
+        </p>
+
+        <div class="sale-countdown" aria-label="Time remaining in monthly offer">
+          <div class="sale-time">
+            <strong id="sale-days">00</strong>
+            <span>DAYS</span>
+          </div>
+
+          <div class="sale-time">
+            <strong id="sale-hours">00</strong>
+            <span>HOURS</span>
+          </div>
+
+          <div class="sale-time">
+            <strong id="sale-minutes">00</strong>
+            <span>MINS</span>
+          </div>
+
+          <div class="sale-time">
+            <strong id="sale-seconds">00</strong>
+            <span>SECS</span>
+          </div>
+        </div>
+
+        <p class="sale-footnote">
+          MONTHLY OFFER · ENDS AT MONTH-END
+        </p>
+      </div>
     </div>
+
     <div class="hero-image">
       <img
         src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=85"
@@ -49,6 +95,7 @@
       <h2>New arrivals,<br><i>fresh perspective.</i></h2>
       <p class="muted">Delivery is R89 per order.</p>
     </div>
+
     <div id="product-grid" class="product-grid">
       <p class="loading">Loading the collection...</p>
     </div>
@@ -60,9 +107,11 @@
         src="https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?auto=format&fit=crop&w=1000&q=85"
         alt="Casual sneakers">
     </div>
+
     <div class="story-content">
       <p class="eyebrow">Less, but better</p>
       <h2>Good shoes<br><i>go places.</i></h2>
+
       <p>
         Discover everyday footwear with thoughtful design, versatile
         style and details that help make every pair your own.
@@ -73,7 +122,9 @@
   <section class="newsletter" id="contact">
     <p class="eyebrow">In your orbit</p>
     <h2>Notes from the studio.<br><i>Nothing noisy.</i></h2>
+
     <p>Have a question about an order? Contact us by email.</p>
+
     <a class="newsletter-link" href="mailto:YOUR_EMAIL@example.com">
       Email Sole Studio →
     </a>
@@ -88,6 +139,7 @@
   <div id="cart-overlay" class="overlay hidden" onclick="closeCart(event)">
     <aside class="cart-drawer" onclick="event.stopPropagation()">
       <button class="close-button" onclick="toggleCart()" aria-label="Close cart">×</button>
+
       <p class="eyebrow">Your selection</p>
       <h2>Shopping bag</h2>
 
@@ -98,29 +150,34 @@
           <span>Subtotal</span>
           <strong id="cart-subtotal">R0.00</strong>
         </div>
+
         <div class="cart-total">
           <span>Delivery</span>
           <strong id="cart-delivery">R89.00</strong>
         </div>
+
         <div class="cart-total grand-total">
           <span>Total</span>
           <strong id="cart-total">R0.00</strong>
         </div>
+
         <button id="checkout-button" class="checkout-button" onclick="openCheckout()">
           Continue as guest →
         </button>
+
         <p class="muted small">Flat-rate delivery: R89 per order.</p>
       </div>
     </aside>
   </div>
 
-  <!-- Guest checkout with delivery details -->
+  <!-- Guest checkout -->
   <div id="checkout-overlay" class="overlay hidden">
     <section class="checkout-modal">
       <button class="close-button" onclick="closeCheckout()" aria-label="Close checkout">×</button>
 
       <p class="eyebrow">Guest checkout</p>
       <h2>Almost <i>yours.</i></h2>
+
       <p class="secure-message">
         Check out without creating an account.
         Payment is processed by PayFast.
@@ -137,6 +194,7 @@
             placeholder="First name"
             autocomplete="given-name"
             required>
+
           <input
             id="last-name"
             name="last_name"
@@ -195,6 +253,7 @@
             placeholder="City or town"
             autocomplete="address-level2"
             required>
+
           <input
             id="postal-code"
             name="postal_code"
@@ -234,6 +293,54 @@
     </section>
   </div>
 
+  <!-- Existing store functionality -->
   <script src="app.js"></script>
+
+  <!-- Monthly countdown timer -->
+  <script>
+    (function () {
+      function updateSaleCountdown() {
+        const now = new Date();
+
+        // First instant of the next calendar month.
+        const monthEnd = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          1,
+          0, 0, 0, 0
+        );
+
+        const remaining = Math.max(
+          0,
+          monthEnd.getTime() - now.getTime()
+        );
+
+        const days = Math.floor(remaining / 86400000);
+        const hours = Math.floor((remaining % 86400000) / 3600000);
+        const minutes = Math.floor((remaining % 3600000) / 60000);
+        const seconds = Math.floor((remaining % 60000) / 1000);
+
+        document.getElementById("sale-days").textContent =
+          String(days).padStart(2, "0");
+
+        document.getElementById("sale-hours").textContent =
+          String(hours).padStart(2, "0");
+
+        document.getElementById("sale-minutes").textContent =
+          String(minutes).padStart(2, "0");
+
+        document.getElementById("sale-seconds").textContent =
+          String(seconds).padStart(2, "0");
+      }
+
+      updateSaleCountdown();
+      setInterval(updateSaleCountdown, 1000);
+
+      const yearElement = document.getElementById("year");
+      if (yearElement) {
+        yearElement.textContent = new Date().getFullYear();
+      }
+    })();
+  </script>
 </body>
 </html>
