@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -113,31 +114,121 @@
     </aside>
   </div>
 
-  <!-- Guest checkout -->
+  <!-- Guest checkout with delivery details -->
   <div id="checkout-overlay" class="overlay hidden">
     <section class="checkout-modal">
       <button class="close-button" onclick="closeCheckout()" aria-label="Close checkout">×</button>
+
       <p class="eyebrow">Guest checkout</p>
       <h2>Almost <i>yours.</i></h2>
       <p class="secure-message">
-        You can check out without creating an account.
+        Check out without creating an account.
         Payment is processed by PayFast.
       </p>
 
       <form id="checkout-form">
+        <h3>Contact details</h3>
+
         <div class="form-row">
-          <input id="first-name" type="text" placeholder="First name" autocomplete="given-name" required>
-          <input id="last-name" type="text" placeholder="Last name" autocomplete="family-name" required>
+          <input
+            id="first-name"
+            name="first_name"
+            type="text"
+            placeholder="First name"
+            autocomplete="given-name"
+            required>
+          <input
+            id="last-name"
+            name="last_name"
+            type="text"
+            placeholder="Last name"
+            autocomplete="family-name"
+            required>
         </div>
-        <input id="email" type="email" placeholder="Email address" autocomplete="email" required>
+
+        <input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="Email address"
+          autocomplete="email"
+          required>
+
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          placeholder="Mobile number"
+          autocomplete="tel"
+          required>
+
+        <h3>Delivery address</h3>
+
+        <input
+          id="address-line1"
+          name="address_line1"
+          type="text"
+          placeholder="Street address and house number"
+          autocomplete="address-line1"
+          required>
+
+        <input
+          id="address-line2"
+          name="address_line2"
+          type="text"
+          placeholder="Apartment, unit or complex (optional)"
+          autocomplete="address-line2">
+
+        <input
+          id="suburb"
+          name="suburb"
+          type="text"
+          placeholder="Suburb"
+          autocomplete="address-level3"
+          required>
+
+        <div class="form-row">
+          <input
+            id="city"
+            name="city"
+            type="text"
+            placeholder="City or town"
+            autocomplete="address-level2"
+            required>
+          <input
+            id="postal-code"
+            name="postal_code"
+            type="text"
+            inputmode="numeric"
+            placeholder="Postal code"
+            autocomplete="postal-code"
+            required>
+        </div>
+
+        <input
+          id="province"
+          name="province"
+          type="text"
+          placeholder="Province (e.g. Eastern Cape)"
+          autocomplete="address-level1"
+          required>
+
+        <textarea
+          id="delivery-instructions"
+          name="delivery_instructions"
+          placeholder="Delivery instructions (optional)"
+          rows="3"></textarea>
+
         <p class="checkout-summary">
           Products: <strong id="checkout-subtotal">R0.00</strong><br>
           Delivery: <strong>R89.00</strong><br>
           Total to pay: <strong id="checkout-total">R0.00</strong>
         </p>
+
         <button id="pay-button" class="checkout-button" type="submit">
           Continue to PayFast →
         </button>
+
         <p id="checkout-error" role="alert"></p>
       </form>
     </section>
