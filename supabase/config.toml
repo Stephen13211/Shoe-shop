@@ -1,0 +1,6 @@
+
+[functions.payfast-checkout]
+verify_jwt = false
+
+[functions.payfast-itn]
+verify_jwt = false
