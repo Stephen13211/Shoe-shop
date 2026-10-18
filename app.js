@@ -1,9 +1,7 @@
-// =====================================================
-// SOLE STUDIO - FRONTEND SETTINGS
-// Replace these two placeholders with your Supabase
-// project URL and publishable/anon key.
-// Never put the service-role key here.
-// =====================================================
+
+ // =====================================================
+ // SOLE STUDIO - FRONTEND SETTINGS
+ // =====================================================
 
 const SUPABASE_URL = "https://iyvmgmrtunivkamzysso.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_NPgwSxJUO_UBqmjsyFNcxA_SSYcgbb4";
@@ -38,11 +36,17 @@ function escapeHTML(value) {
 }
 
 // =====================================================
-// LOAD PRODUCTS FROM SUPABASE
+// LOAD REAL PRODUCTS FROM SUPABASE
 // =====================================================
 
 async function loadProducts() {
   const grid = document.getElementById("product-grid");
+
+  if (!grid) {
+    console.error("Product grid element was not found.");
+    return;
+  }
+
   grid.innerHTML = '<p class="loading">Loading the collection...</p>';
 
   const { data, error } = await supabaseClient
@@ -96,7 +100,10 @@ function renderProducts() {
         <strong>${money(product.price)}</strong>
       </div>
 
-      <button class="add-button" data-add-product="${escapeHTML(product.id)}">
+      <button
+        type="button"
+        class="add-button"
+        data-add-product="${escapeHTML(product.id)}">
         Add to bag
       </button>
     </article>
@@ -104,16 +111,17 @@ function renderProducts() {
 
   grid.querySelectorAll("[data-add-product]").forEach((button) => {
     button.addEventListener("click", () => {
-      addToCart(button.dataset.addProduct);
+      addToCart(button.dataset.addProduct, button);
     });
   });
 }
 
 // =====================================================
 // SHOPPING CART
+// Clicking Add to Bag does NOT open the bag.
 // =====================================================
 
-function addToCart(productId) {
+function addToCart(productId, button) {
   const product = products.find((item) => item.id === productId);
   if (!product) return;
 
@@ -126,7 +134,19 @@ function addToCart(productId) {
   }
 
   updateCart();
-  document.getElementById("cart-overlay").classList.remove("hidden");
+
+  // Brief confirmation without interrupting shopping.
+  if (button) {
+    const originalText = button.textContent;
+
+    button.textContent = "Added to bag ✓";
+    button.disabled = true;
+
+    setTimeout(() => {
+      button.textContent = originalText;
+      button.disabled = false;
+    }, 1200);
+  }
 }
 
 function changeQuantity(productId, amount) {
@@ -160,9 +180,12 @@ function updateCart() {
   );
 
   document.getElementById("cart-count").textContent = count;
-  document.getElementById("cart-subtotal").textContent = money(getSubtotal());
+  document.getElementById("cart-subtotal").textContent =
+    money(getSubtotal());
+
   document.getElementById("cart-delivery").textContent =
     money(cart.length ? DELIVERY_FEE : 0);
+
   document.getElementById("cart-total").textContent = money(getTotal());
 
   const cartItems = document.getElementById("cart-items");
@@ -172,23 +195,34 @@ function updateCart() {
   } else {
     cartItems.innerHTML = cart.map((item) => `
       <div class="cart-item">
-        <img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.name)}">
+        <img
+          src="${escapeHTML(item.image)}"
+          alt="${escapeHTML(item.name)}">
+
         <div>
           <h3>${escapeHTML(item.name)}</h3>
           <p>${money(item.price)} each</p>
+
           <div class="quantity">
-            <button type="button"
+            <button
+              type="button"
               data-quantity-id="${escapeHTML(item.id)}"
               data-quantity-change="-1"
               aria-label="Remove one">−</button>
+
             <span>${item.quantity}</span>
-            <button type="button"
+
+            <button
+              type="button"
               data-quantity-id="${escapeHTML(item.id)}"
               data-quantity-change="1"
               aria-label="Add one">+</button>
           </div>
         </div>
-        <strong>${money(Number(item.price) * item.quantity)}</strong>
+
+        <strong>
+          ${money(Number(item.price) * item.quantity)}
+        </strong>
       </div>
     `).join("");
 
@@ -203,12 +237,20 @@ function updateCart() {
   }
 
   const checkoutButton = document.getElementById("checkout-button");
+
   checkoutButton.disabled = cart.length === 0;
   checkoutButton.style.opacity = cart.length === 0 ? "0.5" : "1";
 
-  document.getElementById("checkout-subtotal").textContent = money(getSubtotal());
-  document.getElementById("checkout-total").textContent = money(getTotal());
+  document.getElementById("checkout-subtotal").textContent =
+    money(getSubtotal());
+
+  document.getElementById("checkout-total").textContent =
+    money(getTotal());
 }
+
+// =====================================================
+// OPEN AND CLOSE BAG
+// =====================================================
 
 function toggleCart() {
   document.getElementById("cart-overlay").classList.toggle("hidden");
@@ -232,7 +274,9 @@ function openCheckout() {
 
   document.getElementById("cart-overlay").classList.add("hidden");
   document.getElementById("checkout-error").textContent = "";
+
   updateCart();
+
   document.getElementById("checkout-overlay").classList.remove("hidden");
 }
 
@@ -242,7 +286,7 @@ function closeCheckout() {
 
 // =====================================================
 // SEND ORDER TO SUPABASE EDGE FUNCTION
-// The backend must calculate prices and delivery itself.
+// Backend must calculate prices and delivery itself.
 // =====================================================
 
 document.getElementById("checkout-form").addEventListener(
@@ -260,17 +304,21 @@ document.getElementById("checkout-form").addEventListener(
       return;
     }
 
-    const firstName = document.getElementById("first-name").value.trim();
-    const lastName = document.getElementById("last-name").value.trim();
-    const email = document.getElementById("email").value.trim();
+    const firstName =
+      document.getElementById("first-name").value.trim();
+
+    const lastName =
+      document.getElementById("last-name").value.trim();
+
+    const email =
+      document.getElementById("email").value.trim();
 
     if (!firstName || !lastName || !email) {
       errorBox.textContent = "Please complete all checkout fields.";
       return;
     }
 
-    // Send only product IDs and quantities.
-    // Do not trust product names or prices from the browser.
+    // Send product IDs and quantities only.
     const items = cart.map((item) => ({
       product_id: item.id,
       quantity: item.quantity
@@ -300,24 +348,31 @@ document.getElementById("checkout-form").addEventListener(
 
       if (!response.ok) {
         throw new Error(
-          result.error || result.message || "Could not start checkout."
+          result.error ||
+          result.message ||
+          "Could not start checkout."
         );
       }
 
       if (!result.process_url || !result.fields) {
-        throw new Error("The payment service returned an incomplete response.");
+        throw new Error(
+          "The payment service returned an incomplete response."
+        );
       }
 
-      // Submit the returned payment fields directly to PayFast.
+      // Submit payment fields to the returned PayFast URL.
       const paymentForm = document.createElement("form");
+
       paymentForm.method = "POST";
       paymentForm.action = result.process_url;
 
       Object.entries(result.fields).forEach(([key, value]) => {
         const input = document.createElement("input");
+
         input.type = "hidden";
         input.name = key;
         input.value = String(value);
+
         paymentForm.appendChild(input);
       });
 
@@ -325,15 +380,22 @@ document.getElementById("checkout-form").addEventListener(
       paymentForm.submit();
     } catch (error) {
       console.error("Checkout error:", error);
+
       errorBox.textContent =
         error.message || "Something went wrong. Please try again.";
+
       payButton.disabled = false;
       payButton.textContent = "Continue to PayFast →";
     }
   }
 );
 
-document.getElementById("year").textContent = new Date().getFullYear();
+// =====================================================
+// INITIALISE WEBSITE
+// =====================================================
+
+document.getElementById("year").textContent =
+  new Date().getFullYear();
 
 updateCart();
 loadProducts();
