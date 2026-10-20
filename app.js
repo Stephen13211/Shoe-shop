@@ -5,6 +5,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_NPgwSxJUO_UBqmjsyFNcxA_SSYcgbb4";
 const CHECKOUT_ENDPOINT = `${SUPABASE_URL}/functions/v1/payfast-checkout`;
 const DELIVERY_FEE = 89;
 const SALE_DISCOUNT = 0.20;
+const GA4_CURRENCY = "ZAR";
 
 const SHOE_SIZES = [
   { value: "UK 5 / US 6", label: "UK 5 / US 6" },
@@ -23,6 +24,27 @@ const supabaseClient = window.supabase.createClient(
 let products = [];
 let cart = [];
 
+// GOOGLE ANALYTICS 4
+function trackGA4(eventName, parameters = {}) {
+  if (typeof window.gtag !== "function") {
+    console.warn("Google Analytics is not loaded:", eventName);
+    return;
+  }
+
+  window.gtag("event", eventName, parameters);
+}
+
+function getGA4Items(items) {
+  return items.map((item) => ({
+    item_id: String(item.id),
+    item_name: item.name,
+    item_category: item.type || undefined,
+    item_variant: item.shoe_size || item.color || undefined,
+    price: salePrice(item.price),
+    quantity: item.quantity || 1
+  }));
+}
+
 const money = (amount) =>
   `R${Number(amount).toLocaleString("en-ZA", {
     minimumFractionDigits: 2,
@@ -30,7 +52,9 @@ const money = (amount) =>
   })}`;
 
 function salePrice(price) {
-  return Math.round((Number(price) * (1 - SALE_DISCOUNT) + Number.EPSILON) * 100) / 100;
+  return Math.round(
+    (Number(price) * (1 - SALE_DISCOUNT) + Number.EPSILON) * 100
+  ) / 100;
 }
 
 function escapeHTML(value) {
@@ -57,14 +81,16 @@ async function loadProducts() {
 
   if (error) {
     console.error("Product loading error:", error);
-    grid.innerHTML = "<p>We could not load the collection. Please try again later.</p>";
+    grid.innerHTML =
+      "<p>We could not load the collection. Please try again later.</p>";
     return;
   }
 
   products = data || [];
 
   if (!products.length) {
-    grid.innerHTML = "<p>No products are available yet. Add products in Supabase first.</p>";
+    grid.innerHTML =
+      "<p>No products are available yet. Add products in Supabase first.</p>";
     return;
   }
 
@@ -126,6 +152,12 @@ function renderProducts() {
     </article>
   `).join("");
 
+  // GA4: Products displayed in the collection
+  trackGA4("view_item_list", {
+    item_list_name: "Sneaker Hub Collection",
+    items: getGA4Items(products)
+  });
+
   grid.querySelectorAll("[data-add-product]").forEach((button) => {
     button.addEventListener("click", () => {
       const productId = button.dataset.addProduct;
@@ -163,6 +195,17 @@ function addToCart(productId, shoeSize, button) {
   }
 
   updateCart();
+
+  // GA4: Successfully added a shoe to the bag
+  trackGA4("add_to_cart", {
+    currency: GA4_CURRENCY,
+    value: salePrice(product.price),
+    items: getGA4Items([{
+      ...product,
+      shoe_size: shoeSize,
+      quantity: 1
+    }])
+  });
 
   if (button) {
     const originalText = button.textContent;
@@ -204,7 +247,9 @@ function getSubtotal() {
 }
 
 function getTotal() {
-  return cart.length ? Math.round((getSubtotal() + DELIVERY_FEE) * 100) / 100 : 0;
+  return cart.length
+    ? Math.round((getSubtotal() + DELIVERY_FEE) * 100) / 100
+    : 0;
 }
 
 function updateCart() {
@@ -218,7 +263,9 @@ function updateCart() {
 
   if (cartCount) cartCount.textContent = count;
   if (cartSubtotal) cartSubtotal.textContent = money(getSubtotal());
-  if (cartDelivery) cartDelivery.textContent = money(cart.length ? DELIVERY_FEE : 0);
+  if (cartDelivery) {
+    cartDelivery.textContent = money(cart.length ? DELIVERY_FEE : 0);
+  }
   if (cartTotal) cartTotal.textContent = money(getTotal());
 
   if (cartItems) {
@@ -281,8 +328,12 @@ function updateCart() {
   const checkoutSubtotal = document.getElementById("checkout-subtotal");
   const checkoutTotal = document.getElementById("checkout-total");
 
-  if (checkoutSubtotal) checkoutSubtotal.textContent = money(getSubtotal());
-  if (checkoutTotal) checkoutTotal.textContent = money(getTotal());
+  if (checkoutSubtotal) {
+    checkoutSubtotal.textContent = money(getSubtotal());
+  }
+  if (checkoutTotal) {
+    checkoutTotal.textContent = money(getTotal());
+  }
 }
 
 // OPEN AND CLOSE BAG
@@ -307,6 +358,13 @@ function openCheckout() {
   document.getElementById("checkout-error").textContent = "";
   updateCart();
   document.getElementById("checkout-overlay").classList.remove("hidden");
+
+  // GA4: Shopper started checkout
+  trackGA4("begin_checkout", {
+    currency: GA4_CURRENCY,
+    value: getSubtotal(),
+    items: getGA4Items(cart)
+  });
 }
 
 function closeCheckout() {
@@ -397,7 +455,9 @@ document.getElementById("checkout-form").addEventListener("submit", async (event
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.error || result.message || "Could not start checkout.");
+      throw new Error(
+        result.error || result.message || "Could not start checkout."
+      );
     }
 
     if (!result.process_url || !result.fields) {
@@ -420,7 +480,8 @@ document.getElementById("checkout-form").addEventListener("submit", async (event
     paymentForm.submit();
   } catch (error) {
     console.error("Checkout error:", error);
-    errorBox.textContent = error.message || "Something went wrong. Please try again.";
+    errorBox.textContent =
+      error.message || "Something went wrong. Please try again.";
     payButton.disabled = false;
     payButton.textContent = "Continue to PayFast →";
   }
@@ -428,7 +489,9 @@ document.getElementById("checkout-form").addEventListener("submit", async (event
 
 // INITIALISE
 const yearElement = document.getElementById("year");
-if (yearElement) yearElement.textContent = new Date().getFullYear();
+if (yearElement) {
+  yearElement.textContent = new Date().getFullYear();
+}
 
 updateCart();
 loadProducts();
